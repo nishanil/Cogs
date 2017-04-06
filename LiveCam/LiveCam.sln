@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveCam", "LiveCam\LiveCam.csproj", "{212ABB9C-5F35-463F-9A27-8F39811C4128}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Ad-Hoc|iPhone = Ad-Hoc|iPhone
+		Ad-Hoc|iPhoneSimulator = Ad-Hoc|iPhoneSimulator
+		AppStore|iPhone = AppStore|iPhone
+		AppStore|iPhoneSimulator = AppStore|iPhoneSimulator
+		Debug|iPhone = Debug|iPhone
+		Debug|iPhoneSimulator = Debug|iPhoneSimulator
+		Release|iPhone = Release|iPhone
+		Release|iPhoneSimulator = Release|iPhoneSimulator
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Ad-Hoc|iPhone.ActiveCfg = Ad-Hoc|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Ad-Hoc|iPhone.Build.0 = Ad-Hoc|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Ad-Hoc|iPhoneSimulator.ActiveCfg = Ad-Hoc|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Ad-Hoc|iPhoneSimulator.Build.0 = Ad-Hoc|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.AppStore|iPhone.ActiveCfg = AppStore|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.AppStore|iPhone.Build.0 = AppStore|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.AppStore|iPhoneSimulator.ActiveCfg = AppStore|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.AppStore|iPhoneSimulator.Build.0 = AppStore|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Debug|iPhone.ActiveCfg = Debug|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Debug|iPhone.Build.0 = Debug|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Release|iPhone.ActiveCfg = Release|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Release|iPhone.Build.0 = Release|iPhone
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
+		{212ABB9C-5F35-463F-9A27-8F39811C4128}.Release|iPhoneSimulator.Build.0 = Release|iPhoneSimulator
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
