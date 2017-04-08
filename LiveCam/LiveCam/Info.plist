@@ -5,7 +5,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>LiveCam</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.companyname.LiveCam</string>
+	<string>com.nnish.livecam</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
@@ -32,8 +32,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
@@ -43,5 +41,7 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>For Face Detection</string>
+	<key>CFBundleName</key>
+	<string>LiveCam</string>
 </dict>
 </plist>
