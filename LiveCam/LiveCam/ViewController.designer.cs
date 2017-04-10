@@ -1,4 +1,4 @@
-﻿// WARNING
+// WARNING
 //
 // This file has been generated automatically by Xamarin Studio from the outlets and
 // actions declared in your storyboard file.
@@ -15,10 +15,19 @@ namespace LiveCam
     {
         [Outlet]
         [GeneratedCode ("iOS Designer", "1.0")]
+        UIKit.UILabel GreetingsLabel { get; set; }
+
+        [Outlet]
+        [GeneratedCode ("iOS Designer", "1.0")]
         UIKit.UIView HomeView { get; set; }
 
         void ReleaseDesignerOutlets ()
         {
+            if (GreetingsLabel != null) {
+                GreetingsLabel.Dispose ();
+                GreetingsLabel = null;
+            }
+
             if (HomeView != null) {
                 HomeView.Dispose ();
                 HomeView = null;

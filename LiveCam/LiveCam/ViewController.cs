@@ -14,17 +14,18 @@ using ServiceHelpers;
 using System.Threading.Tasks;
 using System.IO;
 using Microsoft.ProjectOxford.Face;
+using System.Threading;
 
 namespace LiveCam
 {
 	public partial class ViewController : UIViewController
 	{
-		readonly DispatchQueue sessionQueue = new DispatchQueue("com.nnish.livecamqueue");
+		static DispatchQueue sessionQueue = new DispatchQueue("com.nnish.livecamqueue");
 		static AVCaptureSession captureSession = new AVCaptureSession();
 		CALayer previewLayer;
 		AVCaptureDevice captureDevice;
 
-		static bool isFaceRegistered = false;
+		public static bool isFaceRegistered = false;
 		public ViewController(IntPtr handle) : base(handle)
 		{
 		}
@@ -33,28 +34,59 @@ namespace LiveCam
 		{
 			base.ViewDidLoad();
 
-
+			this.Title = "Intelligent Kiosk";
 
 			// Perform any additional setup after loading the view, typically from a nib.
 		}
-		static string personGroupId;
+		//static string personGroupId;
 		async Task RegisterFaces()
 		{
-			var faceServiceClient = new FaceServiceClient("b1843365b41247538cffb304d36609b3");
+			//var faceServiceClient = new FaceServiceClient("b1843365b41247538cffb304d36609b3");
 
-			// Step 1 - Create Face List
-			personGroupId = Guid.NewGuid().ToString();
-			await faceServiceClient.CreatePersonGroupAsync(personGroupId, "Xamarin");
-
-
-			var p = await faceServiceClient.CreatePersonAsync(personGroupId, "Nish Anil");
-			await faceServiceClient.AddPersonFaceAsync
-								   (personGroupId, p.PersonId, "https://raw.githubusercontent.com/nishanil/Mods2016/master/Slides/nish-test.jpg");
+			//// Step 1 - Create Face List
+			//personGroupId = Guid.NewGuid().ToString();
+			//await faceServiceClient.CreatePersonGroupAsync(personGroupId, "Xamarin");
 
 
-			// Step 3 - Train face group
-			await faceServiceClient.TrainPersonGroupAsync(personGroupId);
-			isFaceRegistered = true;
+			//var p = await faceServiceClient.CreatePersonAsync(personGroupId, "Nish Anil");
+			//await faceServiceClient.AddPersonFaceAsync
+			//					   (personGroupId, p.PersonId, "https://raw.githubusercontent.com/nishanil/Mods2016/master/Slides/nish-test.jpg");
+
+
+			//// Step 3 - Train face group
+			//await faceServiceClient.TrainPersonGroupAsync(personGroupId);
+
+			//	await FaceListManager.Initialize();
+
+			try
+			{
+				var persongroupId = Guid.NewGuid().ToString();
+				await FaceServiceHelper.CreatePersonGroupAsync(persongroupId,
+														"Xamarin",
+													 AppDelegate.WorkspaceKey);
+				await FaceServiceHelper.CreatePersonAsync(persongroupId, "NISH ANIL");
+
+				var personsInGroup = await FaceServiceHelper.GetPersonsAsync(persongroupId);
+
+				await FaceServiceHelper.AddPersonFaceAsync(persongroupId, personsInGroup[0].PersonId,
+														   "https://raw.githubusercontent.com/nishanil/Mods2016/master/Slides/nish-test.jpg", null, null);
+
+				await FaceServiceHelper.TrainPersonGroupAsync(persongroupId);
+
+
+				isFaceRegistered = true;
+
+
+			}
+			catch (FaceAPIException ex)
+
+			{
+				Console.WriteLine(ex.Message);
+				isFaceRegistered = false;
+
+			}
+
+
 
 
 			//await DetectFace(
@@ -68,7 +100,7 @@ namespace LiveCam
 		{
 			base.ViewWillAppear(animated);
 			await RegisterFaces();
-			
+
 			PrepareCamera();
 		}
 		public override void ViewDidDisappear(bool animated)
@@ -92,7 +124,7 @@ namespace LiveCam
 
 		private void BeginSession()
 		{
-			NSError error=null;
+			NSError error = null;
 			var deviceInput = new AVCaptureDeviceInput(captureDevice, out error);
 			if (error == null && captureSession.CanAddInput(deviceInput))
 				captureSession.AddInput(deviceInput);
@@ -138,7 +170,10 @@ namespace LiveCam
 
 			captureSession.CommitConfiguration();
 
-			var OutputSampleDelegate = new OutputSampleDelegate { Navigation = NavigationController };
+			var OutputSampleDelegate = new OutputSampleDelegate(
+				(s)=> {
+					GreetingsLabel.Text = s;});
+			
 			videoOut.SetSampleBufferDelegateQueue(OutputSampleDelegate, sessionQueue);
 		}
 		private void EndSession()
@@ -155,57 +190,35 @@ namespace LiveCam
 			base.DidReceiveMemoryWarning();
 			// Release any cached data, images, etc that aren't in use.
 		}
+	}
 
 
+	public class OutputSampleDelegate : AVCaptureVideoDataOutputSampleBufferDelegate
+	{
+		bool isProcessing = false;
+		Action<string> greetingsCallback;
 
-		static async Task DetectFace(UIImage image)
+		public OutputSampleDelegate(Action<string> greetingsCallback)
 		{
-			FaceServiceClient faceServiceClient = new FaceServiceClient("b1843365b41247538cffb304d36609b3");
-
-			var faces = await faceServiceClient.DetectAsync(image.AsPNG().AsStream());
-			if (faces.Any())
-			{
-				var faceIds = faces.Select(face => face.FaceId).ToArray();
-
-				var results = await faceServiceClient.IdentifyAsync(personGroupId, faceIds);
-
-				if (results.Any())
-				{
-					var result = results[0].Candidates[0].PersonId;
-
-					var person = await faceServiceClient.GetPersonAsync(personGroupId, result);
-
-					Console.Write(person.Name);
-				}
-			}
+			this.greetingsCallback = greetingsCallback;
 		}
 
-
-
-
-		public class OutputSampleDelegate : AVCaptureVideoDataOutputSampleBufferDelegate
+		ImageAnalyzer imageAnalyzer = null;
+		public override void DidOutputSampleBuffer(AVCaptureOutput captureOutput,
+												   CMSampleBuffer sampleBuffer,
+												   AVCaptureConnection connection)
 		{
-
-			public UINavigationController Navigation
+			try
 			{
-				get;
-				set;
-			}
-			bool isProcessing = false;
+				if (!ViewController.isFaceRegistered || isProcessing)
 
+				{
+					//		Console.WriteLine("OutputDelegate - Exit (isProcessing: " + DateTime.Now);
+					sampleBuffer.Dispose();
+					//Console.WriteLine("processing..");
 
-			public async override void DidOutputSampleBuffer(AVCaptureOutput captureOutput,
-													   CMSampleBuffer sampleBuffer,
-													   AVCaptureConnection connection)
-			{
-
-				if (!isFaceRegistered)
 					return;
-
-				if (isProcessing)
-					return;
-				connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
-				var image = GetImageFromSampleBuffer(sampleBuffer);
+				}
 
 				//DispatchQueue.MainQueue.DispatchAsync(() =>
 				//{
@@ -218,95 +231,175 @@ namespace LiveCam
 				//	captureSession.StopRunning();
 
 				//});
-				await Task.Run(async () =>
+
+
+				Console.WriteLine("IsProcessing: ");
+
+				isProcessing = true;
+				connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
+				var image = GetImageFromSampleBuffer(sampleBuffer);
+
+				Task.Run(async () =>
+								{
+									try
+									{
+										Console.WriteLine("DetectFace: ");
+										imageAnalyzer = new ImageAnalyzer(() => Task.FromResult<Stream>(image.AsPNG().AsStream()));
+										await ProcessCameraCapture(imageAnalyzer);
+
+									}
+
+									finally
+									{
+										imageAnalyzer = null;
+										isProcessing = false;
+										Console.WriteLine("OUT ");
+
+									}
+
+								});
+			}
+			catch (Exception ex)
+			{
+				Console.Write(ex);
+			}
+			finally
+			{
+				sampleBuffer.Dispose();
+			}
+
+			//	Console.WriteLine("OutputDelegate - Exit: " + DateTime.Now);
+
+		}
+
+		private async Task ProcessCameraCapture(ImageAnalyzer e)
+		{
+
+			DateTime start = DateTime.Now;
+
+			await e.DetectFacesAsync();
+
+			if (e.DetectedFaces.Any())
+			{
+				await e.IdentifyFacesAsync();
+				string greetingsText = GetGreettingFromFaces(e);
+
+				if (e.IdentifiedPersons.Any())
 				{
-					try
-					{
-						isProcessing = true;
-						await DetectFace(image);
-					}
-					catch (Exception ex)
-					{
-						Console.Write(ex);
-					}
-					finally
-					{
-						isProcessing = false;
 
+					if (greetingsCallback != null)
+					{
+						DispatchQueue.MainQueue.DispatchAsync(() =>
+															  greetingsCallback(greetingsText));
 					}
 
-				});
+					Console.WriteLine(greetingsText);
+				}
+				else
+				{
+					Console.WriteLine("No Idea");
 
-				//ImageAnalyzer imageWithFace = new ImageAnalyzer(() => Task.FromResult<Stream>(
-				//														 image.AsPNG().AsStream()));
+				}
+			}
+			else
+			{
+				Console.WriteLine("No Face");
 
-
-				//Task.Run(async () => await ProcessFaceDetectionCapture(imageWithFace))
-				//    .ContinueWith((x) => isProcessing = false);
-
+				//this.UpdateUIForNoFacesDetected();
 
 			}
 
+			TimeSpan latency = DateTime.Now - start;
+			//this.faceLantencyDebugText.Text = string.Format("Face API latency: {0}ms", (int)latency.TotalMilliseconds);
+
+			//this.isProcessingPhoto = false;
+		}
 
 
-			//private async Task ProcessFaceDetectionCapture(ImageAnalyzer e)
-			//{
+		//static async Task DetectFace(UIImage image)
+		//{
+		//	FaceServiceClient faceServiceClient = new FaceServiceClient("b1843365b41247538cffb304d36609b3");
 
-			//	DateTime start = DateTime.Now;
+		//	var faces = await faceServiceClient.DetectAsync(image.AsPNG().AsStream());
+		//	if (faces.Any())
+		//	{
+		//		var faceIds = faces.Select(face => face.FaceId).ToArray();
 
-			//	await e.DetectFacesAsync();
+		//		var results = await faceServiceClient.IdentifyAsync(personGroupId, faceIds);
 
-			//	TimeSpan latency = DateTime.Now - start;
+		//		if (results.Any())
+		//		{
+		//			var result = results[0].Candidates[0].PersonId;
 
+		//			var person = await faceServiceClient.GetPersonAsync(personGroupId, result);
 
+		//			Console.WriteLine(person.Name);
+		//		}
+		//	}
+		//	else
+		//	{
+		//		Console.WriteLine("No Idea");
 
-			//}
+		//	}
+		//}
 
-
-			//private UIImage GetImageFromSampleBuffer(CMSampleBuffer sampleBuffer)
-			//{
-			//	using(var buffer = sampleBuffer.GetImageBuffer() as CVPixelBuffer)
-			//	{
-			//		var ciImage = new CIImage(buffer);
-			//		var ciContext = CIContext.FromOptions(null);
-			//		var imageRect = new CGRect(0, 0, buffer.Width, buffer.Height);
-			//		var cgImage = ciContext.CreateCGImage(ciImage, imageRect);
-			//		return UIImage.FromImage (cgImage);
-
-			//	}
-			//	return null;
-			//}
-
-			UIImage GetImageFromSampleBuffer(CMSampleBuffer sampleBuffer)
+		private string GetGreettingFromFaces(ImageAnalyzer img)
+		{
+			if (img.IdentifiedPersons.Any())
 			{
-				// Get the CoreVideo image
-				using (var pixelBuffer = sampleBuffer.GetImageBuffer() as CVPixelBuffer)
+				string names = img.IdentifiedPersons.Count() > 1 ? string.Join(", ", img.IdentifiedPersons.Select(p => p.Person.Name)) : img.IdentifiedPersons.First().Person.Name;
+
+				if (img.DetectedFaces.Count() > img.IdentifiedPersons.Count())
 				{
-					// Lock the base address
-					pixelBuffer.Lock(CVPixelBufferLock.None);
-					// Get the number of bytes per row for the pixel buffer
-					var baseAddress = pixelBuffer.BaseAddress;
-					var bytesPerRow = (int)pixelBuffer.BytesPerRow;
-					var width = (int)pixelBuffer.Width;
+					return string.Format("Welcome back, {0} and company!", names);
+				}
+				else
+				{
+					return string.Format("Welcome back, {0}!", names);
+				}
+			}
+			else
+			{
+				if (img.DetectedFaces.Count() > 1)
+				{
+					return "Hi everyone! If I knew any of you by name I would say it...";
+				}
+				else
+				{
+					return "Hi there! If I knew you by name I would say it...";
+				}
+			}
+		}
 
-					var height = (int)pixelBuffer.Height;
-					var flags = CGBitmapFlags.PremultipliedFirst | CGBitmapFlags.ByteOrder32Little;
-					// Create a CGImage on the RGB colorspace from the configured parameter above
-					using (var cs = CGColorSpace.CreateDeviceRGB())
+
+		UIImage GetImageFromSampleBuffer(CMSampleBuffer sampleBuffer)
+		{
+			// Get the CoreVideo image
+			using (var pixelBuffer = sampleBuffer.GetImageBuffer() as CVPixelBuffer)
+			{
+				// Lock the base address
+				pixelBuffer.Lock(CVPixelBufferLock.None);
+				// Get the number of bytes per row for the pixel buffer
+				var baseAddress = pixelBuffer.BaseAddress;
+				var bytesPerRow = (int)pixelBuffer.BytesPerRow;
+				var width = (int)pixelBuffer.Width;
+
+				var height = (int)pixelBuffer.Height;
+				var flags = CGBitmapFlags.PremultipliedFirst | CGBitmapFlags.ByteOrder32Little;
+				// Create a CGImage on the RGB colorspace from the configured parameter above
+				using (var cs = CGColorSpace.CreateDeviceRGB())
+				{
+					using (var context = new CGBitmapContext(baseAddress, width, height, 8, bytesPerRow, cs, (CGImageAlphaInfo)flags))
 					{
-						using (var context = new CGBitmapContext(baseAddress, width, height, 8, bytesPerRow, cs, (CGImageAlphaInfo)flags))
+						using (CGImage cgImage = context.ToImage())
 						{
-							using (CGImage cgImage = context.ToImage())
-							{
-								pixelBuffer.Unlock(CVPixelBufferLock.None);
+							pixelBuffer.Unlock(CVPixelBufferLock.None);
 
-								return UIImage.FromImage(cgImage).ResizeImageWithAspectRatio(300,400);
-							}
+							return UIImage.FromImage(cgImage).ResizeImageWithAspectRatio(300, 400);
 						}
 					}
 				}
 			}
 		}
-
 	}
 }

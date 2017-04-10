@@ -21,17 +21,34 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                                <rect key="frame" x="0.0" y="0.0" width="601" height="551"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <subviews/>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="82" translatesAutoresizingMaskIntoConstraints="NO" text="Registering your face..">
+                                <rect key="frame" x="20" y="570" width="560" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="13" weight="ultraLight"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint id="78" firstItem="4" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading"/>
+                            <constraint id="79" firstItem="4" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" constant="1"/>
+                            <constraint id="80" firstItem="y3c-jy-aDJ" firstAttribute="bottom" secondItem="4" secondAttribute="top" constant="64"/>
+                            <constraint id="81" firstItem="wfy-db-euE" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="49"/>
+                            <constraint id="83" firstItem="82" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="19"/>
+                            <constraint id="84" firstItem="82" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20"/>
+                            <constraint id="85" firstItem="8bC-Xf-vdC" firstAttribute="trailing" secondItem="82" secondAttribute="trailing" constant="20"/>
+                            <constraint id="86" firstItem="8bC-Xf-vdC" firstAttribute="bottom" secondItem="82" secondAttribute="bottom" constant="9"/>
+                        </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="QhX-bs-8XO"/>
                     <connections>
                         <outlet property="HomeView" destination="4" id="name-outlet-4"/>
+                        <outlet property="GreetingsLabel" destination="82" id="name-outlet-82"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
