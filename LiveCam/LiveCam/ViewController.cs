@@ -22,10 +22,25 @@ namespace LiveCam
 	{
 		static DispatchQueue sessionQueue = new DispatchQueue("com.nnish.livecamqueue");
 		static AVCaptureSession captureSession = new AVCaptureSession();
+
+		static CIDetector faceDetector;
+
+		public static bool IsFaceDetected = false;
 		CALayer previewLayer;
+		CALayer featureLayer = null;
+		AVCaptureVideoDataOutput videoOut;
+
 		AVCaptureDevice captureDevice;
 
+		UIImage borderImage;
+
 		public static bool isFaceRegistered = false;
+
+		public bool IsUsingFrontFacingCamera
+		{
+			get { return captureDevice?.Position == AVCaptureDevicePosition.Front; }
+		}
+
 		public ViewController(IntPtr handle) : base(handle)
 		{
 		}
@@ -35,28 +50,22 @@ namespace LiveCam
 			base.ViewDidLoad();
 
 			this.Title = "Intelligent Kiosk";
+			faceDetector = CIDetector.CreateFaceDetector(CIContext.FromOptions(null), false);
+			borderImage = UIImage.FromFile("square.png");
+
+			UIDevice.CurrentDevice.BeginGeneratingDeviceOrientationNotifications();
 
 			// Perform any additional setup after loading the view, typically from a nib.
+		}
+
+
+		public override bool ShouldAutorotateToInterfaceOrientation(UIInterfaceOrientation toInterfaceOrientation)
+		{
+			return toInterfaceOrientation == UIInterfaceOrientation.Portrait;
 		}
 		//static string personGroupId;
 		async Task RegisterFaces()
 		{
-			//var faceServiceClient = new FaceServiceClient("b1843365b41247538cffb304d36609b3");
-
-			//// Step 1 - Create Face List
-			//personGroupId = Guid.NewGuid().ToString();
-			//await faceServiceClient.CreatePersonGroupAsync(personGroupId, "Xamarin");
-
-
-			//var p = await faceServiceClient.CreatePersonAsync(personGroupId, "Nish Anil");
-			//await faceServiceClient.AddPersonFaceAsync
-			//					   (personGroupId, p.PersonId, "https://raw.githubusercontent.com/nishanil/Mods2016/master/Slides/nish-test.jpg");
-
-
-			//// Step 3 - Train face group
-			//await faceServiceClient.TrainPersonGroupAsync(personGroupId);
-
-			//	await FaceListManager.Initialize();
 
 			try
 			{
@@ -86,19 +95,14 @@ namespace LiveCam
 
 			}
 
-
-
-
-			//await DetectFace(
-			//	new UIImage(
-			//		NSData.FromUrl(
-			//			new NSUrl("https://raw.githubusercontent.com/nishanil/Mods2016/master/Slides/nish-test.jpg"))).ResizeImageWithAspectRatio(300,400));
 		}
 
 
 		public async override void ViewWillAppear(bool animated)
 		{
 			base.ViewWillAppear(animated);
+
+			//TODO: Just for POC
 			await RegisterFaces();
 
 			PrepareCamera();
@@ -109,14 +113,13 @@ namespace LiveCam
 
 			EndSession();
 		}
+
 		private void PrepareCamera()
 		{
 			captureSession.SessionPreset = AVCaptureSession.PresetMedium;
 			captureDevice = AVCaptureDevice.DevicesWithMediaType(AVMediaType.Video)
 							.Where(d => d.Position == AVCaptureDevicePosition.Front)
 							.FirstOrDefault() ?? AVCaptureDevice.GetDefaultDevice(AVMediaType.Video);
-
-
 
 			BeginSession();
 		}
@@ -133,7 +136,7 @@ namespace LiveCam
 				VideoGravity = AVLayerVideoGravity.ResizeAspect
 			};
 			//this.HomeView.BackgroundColor = UIColor.Black;
-			previewLayer.Frame = this.HomeView.Layer.Frame;
+			previewLayer.Frame = this.HomeView.Layer.Bounds;
 
 			this.HomeView.Layer.AddSublayer(previewLayer);
 
@@ -154,7 +157,7 @@ namespace LiveCam
 			captureSession.StartRunning();
 
 			// create a VideoDataOutput and add it to the sesion
-			var videoOut = new AVCaptureVideoDataOutput()
+			videoOut = new AVCaptureVideoDataOutput()
 			{
 				AlwaysDiscardsLateVideoFrames = true,
 				WeakVideoSettings = new CVPixelBufferAttributes()
@@ -165,15 +168,20 @@ namespace LiveCam
 			};
 
 
+
+
 			if (captureSession.CanAddOutput(videoOut))
 				captureSession.AddOutput(videoOut);
+
 
 			captureSession.CommitConfiguration();
 
 			var OutputSampleDelegate = new OutputSampleDelegate(
-				(s)=> {
-					GreetingsLabel.Text = s;});
-			
+				(s) =>
+				{
+					GreetingsLabel.Text = s;
+				}, new Action<CIImage, CGRect>(DrawFaces));
+
 			videoOut.SetSampleBufferDelegateQueue(OutputSampleDelegate, sessionQueue);
 		}
 		private void EndSession()
@@ -183,6 +191,8 @@ namespace LiveCam
 			foreach (var i in captureSession.Inputs)
 				captureSession.RemoveInput(i);
 
+
+
 		}
 
 		public override void DidReceiveMemoryWarning()
@@ -190,6 +200,235 @@ namespace LiveCam
 			base.DidReceiveMemoryWarning();
 			// Release any cached data, images, etc that aren't in use.
 		}
+
+		#region Draw Faces
+
+		private void DrawFaces(CIImage image, CGRect cleanAperture)
+		{
+			if (image == null)
+				return;
+
+			var features = faceDetector.FeaturesInImage(image);
+
+			if (features.Count() > 0)
+				IsFaceDetected = true;
+
+			DrawFaces(features, cleanAperture, UIDeviceOrientation.Portrait);
+
+		}
+
+		private CIImageOrientation GetExifOrientation(UIDeviceOrientation orientation)
+		{
+			CIImageOrientation exifOrientation;
+
+			switch (orientation)
+			{
+				case UIDeviceOrientation.PortraitUpsideDown:
+					exifOrientation = CIImageOrientation.LeftBottom;
+					break;
+				case UIDeviceOrientation.LandscapeLeft:
+					if (IsUsingFrontFacingCamera)
+						exifOrientation = CIImageOrientation.BottomRight;
+					else
+						exifOrientation = CIImageOrientation.TopLeft;
+					break;
+				case UIDeviceOrientation.LandscapeRight:
+					if (IsUsingFrontFacingCamera)
+						exifOrientation = CIImageOrientation.TopLeft;
+					else
+						exifOrientation = CIImageOrientation.BottomRight;
+
+					break;
+				case UIDeviceOrientation.Portrait:
+				default:
+					exifOrientation = CIImageOrientation.RightTop;
+					break;
+
+			}
+
+			return exifOrientation;
+		}
+
+		private void DrawFaces(CIFeature[] features,
+					   CGRect clearAperture,
+					   UIDeviceOrientation deviceOrientation)
+		{
+
+			var pLayer = this.previewLayer as AVCaptureVideoPreviewLayer;
+			var subLayers = pLayer.Sublayers;
+			var subLayersCount = subLayers.Count();
+
+			var featureCount = features.Count();
+
+			nint currentSubLayer = 0, currentFeature = 0;
+			CATransaction.Begin();
+			CATransaction.DisableActions = true;
+			foreach (var layer in subLayers)
+			{
+				if (layer.Name == "FaceLayer")
+					layer.Hidden = true;
+
+			}
+
+			Console.WriteLine("Feature: " + featureCount);
+			if (featureCount == 0)
+			{
+				CATransaction.Commit();
+				return;
+			}
+
+			var parentFameSize = this.HomeView.Frame.Size;
+			var gravity = pLayer.VideoGravity;
+			var isMirrored = pLayer.Connection.VideoMirrored;
+			var previewBox = VideoPreviewBoxForGravity(gravity, parentFameSize, clearAperture.Size);
+
+
+			foreach (var feature in features)
+			{
+
+				// find the correct position for the square layer within the previewLayer
+				// the feature box originates in the bottom left of the video frame.
+				// (Bottom right if mirroring is turned on)
+				CGRect faceRect = feature.Bounds;
+
+				// flip preview width and height
+				var tempCGSize = new CGSize(faceRect.Size.Height, faceRect.Size.Width);
+
+				faceRect.Size = tempCGSize;
+				faceRect.X = faceRect.Y;
+				faceRect.Y = faceRect.X;
+
+				//// scale coordinates so they fit in the preview box, which may be scaled
+				var widthScaleBy = previewBox.Size.Width / clearAperture.Size.Height;
+				var heightScaleBy = previewBox.Size.Height / clearAperture.Size.Width;
+				var newWidth = faceRect.Size.Width * widthScaleBy;
+				var newheight = faceRect.Size.Height * heightScaleBy;
+				faceRect.Size = new CGSize(newWidth, newheight);
+				faceRect.X *= widthScaleBy;
+				faceRect.Y *= heightScaleBy;
+
+				if (isMirrored)
+					faceRect.Offset(previewBox.X + previewBox.Size.Width - faceRect.Size.Width - (faceRect.X * 2),
+											 previewBox.Y);
+				else
+					faceRect.Offset(previewBox.X, previewBox.Y);
+
+
+				while (featureLayer != null && currentSubLayer < subLayersCount)
+				{
+					CALayer currentLayer = subLayers[currentSubLayer++];
+					if (currentLayer.Name == "FaceLayer")
+					{
+						featureLayer = currentLayer;
+						currentLayer.Hidden = false;
+					}
+				}
+
+				if (featureLayer == null)
+				{
+					featureLayer = new CALayer();
+					featureLayer.Contents = borderImage.CGImage;
+					featureLayer.Name = "FaceLayer";
+					this.previewLayer.AddSublayer(featureLayer);
+
+				}
+
+				featureLayer.Frame = faceRect;
+
+
+				switch (deviceOrientation)
+				{
+					case UIDeviceOrientation.Portrait:
+						featureLayer.AffineTransform = CGAffineTransform.MakeRotation(DegreesToRadians(0));
+						break;
+					case UIDeviceOrientation.PortraitUpsideDown:
+						featureLayer.AffineTransform = (CGAffineTransform.MakeRotation(DegreesToRadians(180)));
+						break;
+					case UIDeviceOrientation.LandscapeLeft:
+						featureLayer.AffineTransform = CGAffineTransform.MakeRotation(DegreesToRadians(90));
+						break;
+
+					case UIDeviceOrientation.LandscapeRight:
+						featureLayer.AffineTransform = CGAffineTransform.MakeRotation(DegreesToRadians(-90));
+
+						break;
+					case UIDeviceOrientation.FaceUp:
+					case UIDeviceOrientation.FaceDown:
+					default:
+						break; // leave the layer in its last known orientation
+				}
+				currentFeature++;
+
+			}
+
+			CATransaction.Commit();
+
+
+		}
+
+
+		public nfloat DegreesToRadians(nfloat deg)
+		{
+			return (nfloat)(Math.PI * deg / 180.0);
+		}
+
+		private CGRect VideoPreviewBoxForGravity(AVLayerVideoGravity gravity, CGSize frameSize, CGSize apertureSize)
+		{
+			var apertureRatio = apertureSize.Height / apertureSize.Width;
+			var viewRatio = frameSize.Width / frameSize.Height;
+
+			CGSize size = CGSize.Empty;
+
+			if (gravity == AVLayerVideoGravity.ResizeAspectFill)
+			{
+				if (viewRatio > apertureRatio)
+				{
+					size.Width = frameSize.Width;
+					size.Height = apertureSize.Width * (frameSize.Width / apertureSize.Height);
+				}
+				else
+				{
+					size.Width = apertureSize.Height * (frameSize.Height / apertureSize.Width);
+					size.Height = frameSize.Height;
+				}
+			}
+			else if (gravity == AVLayerVideoGravity.ResizeAspect)
+			{
+				if (viewRatio > apertureRatio)
+				{
+					size.Width = apertureSize.Height * (frameSize.Height / apertureSize.Width);
+					size.Height = frameSize.Height;
+				}
+				else
+				{
+					size.Width = frameSize.Width;
+					size.Height = apertureSize.Width * (frameSize.Width / apertureSize.Height);
+				}
+			}
+			else if (gravity == AVLayerVideoGravity.Resize)
+			{
+				size.Width = frameSize.Width;
+				size.Height = frameSize.Height;
+			}
+
+
+			CGRect videoBox = CGRect.Empty;
+			videoBox.Size = size;
+			if (size.Width < frameSize.Width)
+				videoBox.X = (frameSize.Width - size.Width) / 2;
+			else
+				videoBox.X = (size.Width - frameSize.Width) / 2;
+
+			if (size.Height < frameSize.Height)
+				videoBox.Y = (frameSize.Height - size.Height) / 2;
+			else
+				videoBox.Y = (size.Height - frameSize.Height) / 2;
+
+			return videoBox;
+		}
+
+		#endregion
+
 	}
 
 
@@ -197,11 +436,16 @@ namespace LiveCam
 	{
 		bool isProcessing = false;
 		Action<string> greetingsCallback;
+		Action<CIImage, CGRect> drawFacesCallback;
 
-		public OutputSampleDelegate(Action<string> greetingsCallback)
+		CALayer previewLayer;
+
+		public OutputSampleDelegate(Action<string> greetingsCallback, Action<CIImage, CGRect> drawFacesCallback)
 		{
 			this.greetingsCallback = greetingsCallback;
+			this.drawFacesCallback = drawFacesCallback;
 		}
+
 
 		ImageAnalyzer imageAnalyzer = null;
 		public override void DidOutputSampleBuffer(AVCaptureOutput captureOutput,
@@ -220,32 +464,36 @@ namespace LiveCam
 					return;
 				}
 
-				//DispatchQueue.MainQueue.DispatchAsync(() =>
-				//{
 
-				//	var SecondViewController = Navigation?.Storyboard.InstantiateViewController("SecondViewController") as SecondViewController;
-
-				//	SecondViewController.Image = image;
-				//	Navigation?.PushViewController(SecondViewController, true);
-
-				//	captureSession.StopRunning();
-
-				//});
-
-
-				Console.WriteLine("IsProcessing: ");
+				//Console.WriteLine("IsProcessing: ");
 
 				isProcessing = true;
 				connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
+				connection.VideoScaleAndCropFactor = 1.0f;
+
 				var image = GetImageFromSampleBuffer(sampleBuffer);
 
+				var ciImage = CIImage.FromCGImage(image.CGImage);
+
+				var cleanAperture = sampleBuffer.GetVideoFormatDescription().GetCleanAperture(false);
+
+				/*For Face Detection using iOS APIs*/
+				DispatchQueue.MainQueue.DispatchAsync(() =>
+													  drawFacesCallback(ciImage, cleanAperture));
+
+
+				//Console.WriteLine(ciImage);
 				Task.Run(async () =>
 								{
 									try
 									{
-										Console.WriteLine("DetectFace: ");
-										imageAnalyzer = new ImageAnalyzer(() => Task.FromResult<Stream>(image.AsPNG().AsStream()));
-										await ProcessCameraCapture(imageAnalyzer);
+										//if (ViewController.IsFaceDetected)
+										//{
+											Console.WriteLine("face detected: ");
+
+											imageAnalyzer = new ImageAnalyzer(() => Task.FromResult<Stream>(image.ResizeImageWithAspectRatio(300, 400).AsPNG().AsStream()));
+											await ProcessCameraCapture(imageAnalyzer);
+										//}
 
 									}
 
@@ -268,9 +516,10 @@ namespace LiveCam
 				sampleBuffer.Dispose();
 			}
 
-			//	Console.WriteLine("OutputDelegate - Exit: " + DateTime.Now);
-
 		}
+
+
+
 
 		private async Task ProcessCameraCapture(ImageAnalyzer e)
 		{
@@ -289,59 +538,40 @@ namespace LiveCam
 
 					if (greetingsCallback != null)
 					{
-						DispatchQueue.MainQueue.DispatchAsync(() =>
-															  greetingsCallback(greetingsText));
+						DisplayMessage(greetingsText);
 					}
 
 					Console.WriteLine(greetingsText);
 				}
 				else
 				{
+					DisplayMessage("No Idea, who you're.. Register your face.");
+
 					Console.WriteLine("No Idea");
 
 				}
 			}
 			else
 			{
-				Console.WriteLine("No Face");
+				DisplayMessage("No face detected.");
+
+				Console.WriteLine("No Face ");
 
 				//this.UpdateUIForNoFacesDetected();
 
 			}
 
 			TimeSpan latency = DateTime.Now - start;
-			//this.faceLantencyDebugText.Text = string.Format("Face API latency: {0}ms", (int)latency.TotalMilliseconds);
-
+			var latencyString = string.Format("Face API latency: {0}ms", (int)latency.TotalMilliseconds);
+			Console.WriteLine(latencyString);
 			//this.isProcessingPhoto = false;
 		}
 
-
-		//static async Task DetectFace(UIImage image)
-		//{
-		//	FaceServiceClient faceServiceClient = new FaceServiceClient("b1843365b41247538cffb304d36609b3");
-
-		//	var faces = await faceServiceClient.DetectAsync(image.AsPNG().AsStream());
-		//	if (faces.Any())
-		//	{
-		//		var faceIds = faces.Select(face => face.FaceId).ToArray();
-
-		//		var results = await faceServiceClient.IdentifyAsync(personGroupId, faceIds);
-
-		//		if (results.Any())
-		//		{
-		//			var result = results[0].Candidates[0].PersonId;
-
-		//			var person = await faceServiceClient.GetPersonAsync(personGroupId, result);
-
-		//			Console.WriteLine(person.Name);
-		//		}
-		//	}
-		//	else
-		//	{
-		//		Console.WriteLine("No Idea");
-
-		//	}
-		//}
+		void DisplayMessage(string greetingsText)
+		{
+			DispatchQueue.MainQueue.DispatchAsync(() =>
+												  greetingsCallback(greetingsText));
+		}
 
 		private string GetGreettingFromFaces(ImageAnalyzer img)
 		{
@@ -395,11 +625,14 @@ namespace LiveCam
 						{
 							pixelBuffer.Unlock(CVPixelBufferLock.None);
 
-							return UIImage.FromImage(cgImage).ResizeImageWithAspectRatio(300, 400);
+							return UIImage.FromImage(cgImage);
 						}
 					}
 				}
 			}
 		}
+
+
+
 	}
 }

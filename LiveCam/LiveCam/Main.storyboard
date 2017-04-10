@@ -22,7 +22,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                                <rect key="frame" x="0.0" y="0.0" width="601" height="551"/>
+                                <rect key="frame" x="0.0" y="0.0" width="376" height="667"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <subviews/>
                             </view>
@@ -38,7 +38,6 @@
                             <constraint id="78" firstItem="4" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading"/>
                             <constraint id="79" firstItem="4" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" constant="1"/>
                             <constraint id="80" firstItem="y3c-jy-aDJ" firstAttribute="bottom" secondItem="4" secondAttribute="top" constant="64"/>
-                            <constraint id="81" firstItem="wfy-db-euE" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="49"/>
                             <constraint id="83" firstItem="82" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="19"/>
                             <constraint id="84" firstItem="82" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20"/>
                             <constraint id="85" firstItem="8bC-Xf-vdC" firstAttribute="trailing" secondItem="82" secondAttribute="trailing" constant="20"/>
@@ -73,41 +72,11 @@
             </objects>
             <point key="canvasLocation" x="-0.8" y="-0.4497751"/>
         </scene>
-        <scene sceneID="11">
-            <objects>
-                <viewController id="12" sceneMemberID="viewController" customClass="SecondViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" storyboardIdentifier="SecondViewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="9"/>
-                        <viewControllerLayoutGuide type="bottom" id="10"/>
-                    </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="13">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="16" translatesAutoresizingMaskIntoConstraints="NO" fixedFrame="YES">
-                                <rect key="frame" x="71" y="100" width="350" height="225"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="22" translatesAutoresizingMaskIntoConstraints="NO" fixedFrame="YES">
-                                <rect key="frame" x="213" y="359" width="46" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Button">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <connections>
-                                    <action selector="UIButton22_TouchUpInside:" destination="12" id="23" eventType="touchUpInside"/>
-                                </connections>
-                            </button>
-                        </subviews>
-                    </view>
-                    <connections>
-                        <outlet property="SampleImage" destination="16" id="name-outlet-16"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="14" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="1149" y="671"/>
-        </scene>
     </scenes>
+    <resources>
+        <image name="square.png" width="818" height="786"/>
+    </resources>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedScreenMetrics key="destination" type="retina47"/>
+    </simulatedMetricsContainer>
 </document>
