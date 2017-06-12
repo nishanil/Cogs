@@ -90,7 +90,11 @@ namespace LiveCam.Droid
             float x = TranslateX(face.Position.X + face.Width / 2);
             float y = TranslateY(face.Position.Y + face.Height / 2);
             //canvas.DrawCircle(x, y, FACE_POSITION_RADIUS, mFacePositionPaint);
-            //canvas.DrawText("id: " + mFaceId, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
+
+            //HACK: Demo only
+            if(!string.IsNullOrEmpty(MainActivity.GreetingsText))
+                
+            canvas.DrawText(MainActivity.GreetingsText, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
             //canvas.DrawText("happiness: " + Math.Round(face.IsSmilingProbability, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
             //canvas.DrawText("right eye: " + Math.Round(face.IsRightEyeOpenProbability, 2).ToString(), x + ID_X_OFFSET * 2, y + ID_Y_OFFSET * 2, mIdPaint);
             //canvas.DrawText("left eye: " + Math.Round(face.IsLeftEyeOpenProbability, 2).ToString(), x - ID_X_OFFSET * 2, y - ID_Y_OFFSET * 2, mIdPaint);

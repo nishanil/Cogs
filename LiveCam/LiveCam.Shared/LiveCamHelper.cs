@@ -46,12 +46,12 @@ namespace LiveCam.Shared
                 await FaceServiceHelper.CreatePersonGroupAsync(persongroupId,
                                                         "Xamarin",
                                                      WorkspaceKey);
-                await FaceServiceHelper.CreatePersonAsync(persongroupId, "NISH ANIL");
+                await FaceServiceHelper.CreatePersonAsync(persongroupId, "Albert Einstein");
 
                 var personsInGroup = await FaceServiceHelper.GetPersonsAsync(persongroupId);
 
                 await FaceServiceHelper.AddPersonFaceAsync(persongroupId, personsInGroup[0].PersonId,
-                                                           "https://raw.githubusercontent.com/nishanil/Mods2016/master/Slides/nish-test.jpg", null, null);
+                                                           "https://upload.wikimedia.org/wikipedia/commons/d/d3/Albert_Einstein_Head.jpg", null, null);
 
                 await FaceServiceHelper.TrainPersonGroupAsync(persongroupId);
 
@@ -102,7 +102,7 @@ namespace LiveCam.Shared
             }
             else
             {
-                DisplayMessage("No face detected.");
+               // DisplayMessage("No face detected.");
 
                 Console.WriteLine("No Face ");
 

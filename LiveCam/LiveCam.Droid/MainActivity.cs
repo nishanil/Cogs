@@ -31,7 +31,14 @@ namespace LiveCam.Droid
 
         private CameraSourcePreview mPreview;
         private GraphicOverlay mGraphicOverlay;
-        private TextView greetingsText;
+
+
+        public static string GreetingsText
+        {
+            get;
+            set;
+        }
+
         private static readonly int RC_HANDLE_GMS = 9001;
         // permission request codes need to be < 256
         private static readonly int RC_HANDLE_CAMERA_PERM = 2;
@@ -45,14 +52,14 @@ namespace LiveCam.Droid
 
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
-            greetingsText = FindViewById<TextView>(Resource.Id.greetingsTextView);
+            //greetingsText = FindViewById<TextView>(Resource.Id.greetingsTextView);
 
 
             if (ActivityCompat.CheckSelfPermission(this, Manifest.Permission.Camera) == Permission.Granted)
             {
                 CreateCameraSource();
                 LiveCamHelper.Init();
-                LiveCamHelper.GreetingsCallback = (s) => { RunOnUiThread(()=> greetingsText.Text = s ); };
+                LiveCamHelper.GreetingsCallback = (s) => { RunOnUiThread(()=> GreetingsText = s ); };
                 await LiveCamHelper.RegisterFaces();
             }
             else { RequestCameraPermission(); }
@@ -135,7 +142,7 @@ namespace LiveCam.Droid
 
             mCameraSource = new CameraSource.Builder(context, detector)
                     .SetRequestedPreviewSize(640, 480)
-                    .SetFacing(CameraFacing.Front)
+                                            .SetFacing(CameraFacing.Back)
                     .SetRequestedFps(30.0f)
                     .Build();
 

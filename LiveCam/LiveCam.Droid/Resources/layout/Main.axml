@@ -7,16 +7,11 @@
     android:keepScreenOn="true">
     <LiveCam.Droid.CameraSourcePreview
         android:id="@+id/preview"
-        android:layout_width="640dp"
-        android:layout_height="480dp">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
         <LiveCam.Droid.GraphicOverlay
             android:id="@+id/faceOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
     </LiveCam.Droid.CameraSourcePreview>
-    <TextView
-        android:id="@+id/greetingsTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Hola!" />
 </LinearLayout>
